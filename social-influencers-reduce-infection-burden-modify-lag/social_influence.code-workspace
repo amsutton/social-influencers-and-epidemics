@@ -1,0 +1,10 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"julia.executablePath": "/Users/Aja/.julia/juliaup/julia-1.7.2+0.x64.apple.darwin14/bin/julia"
+	}
+}

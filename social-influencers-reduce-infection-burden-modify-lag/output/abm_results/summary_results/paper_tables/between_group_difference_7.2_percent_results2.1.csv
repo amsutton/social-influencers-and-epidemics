@@ -1,0 +1,5 @@
+group,peak_n_infections_median,peak_n_infections_lower,peak_n_infections_upper,pct_sims_early_same_or_fewer_infections,pct_sims_early_same_mean_diff,pct_sims_early_same_median_diff,pct_sims_early_same_lower_diff,pct_sims_early_same_upper_diff,mean_infection_rate_prepeak,median_infection_rate_prepeak,lower_infection_rate_prepeak,upper_infection_rate_prepeak,group difference at peak
+early-infected group: no influence,165,129.975,195,86.2,9.70069606,8,0,28,6.94664128,1,1,16,7.2
+late-infected group: no influence,169,134,199.025,86.2,9.70069606,8,0,28,7.10254279,1,1,16,7.2
+early-infected group: concordant,129,98,161,79.2,8.8510101,7.5,0,25,5.43505852,5,1,12,7.2
+late-infected group: discordant,133,100,163,79.2,8.8510101,7.5,0,25,5.60975322,5,1,13,7.2
