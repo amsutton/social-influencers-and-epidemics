@@ -48,15 +48,15 @@ Warning: this part of the analysis is extremely computationally intense, and can
 
 ### Clean, analyze, and visualize the generated data in ```R```
 
-The analyses and results in this paper can be reproduced by opening the ```R``` project file: ```social_influence.Rproj```. Assuming you have run the simulation code, you will have the data saved appropriately. If you are not running the Julia code, you must assure you have the cleaned objects in the ```/data``` folder (these are available at [LINK FORTHCOMING UPON PUBLICATION]. 
+The analyses and results in this paper can be reproduced by opening the ```R``` project file: ```social_influence.Rproj```. Assuming you have run the simulation code, you will have the data saved appropriately. If you are not running the Julia code, you must assure you have the cleaned objects in the ```/data``` folder (these are available at [LINK FORTHCOMING UPON PUBLICATION]). 
 
 If you are cleaning the raw simulation data, run the code in the script: ```code/r_code/00a_run_from_source.R```. If you are processing previously cleaned code, open up ```00a_run_from_source.R``` and run the code, omitting line 18 (the processing script). 
 
 This process should generate behaviour and infection curves, as well as analytical results, tables, and figures used in the paper.
 
+Note: we have used a substring() call a few times in the analytical scripts; it may be necessary to change the indexing in these calls based on the full pathway string your computer uses. We have provided comments on what the extracted strings should look like to ease this process. We aim to replace these with relative pathways soon.
 
-
-If you have questions or comments, please get in touch!
+If you have questions or comments, please get in touch by email!
 
 
 
