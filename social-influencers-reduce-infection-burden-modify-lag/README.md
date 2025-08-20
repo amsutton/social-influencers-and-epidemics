@@ -1,6 +1,6 @@
 # Social influencers reduce infection burden and modify epidemic lag in group-structured populations 
 
-![alt text](https://github.com/amsutton/social-influencers-and-epidemics/blob/main/social-influencers-reduce-infection-burden-modify-lag/socinf_coverimage.png)
+<img src="https://github.com/amsutton/social-influencers-and-epidemics/blob/main/social-influencers-reduce-infection-burden-modify-lag/socinf_coverimage.png" alt="infection curves" style="width:50%; height:auto;">
 
 This analysis is primarily built in the ```Julia``` programming language using ```Agents.jl``` to implement and run agent-based models. The visualization of the results is completed in ```R``` programming language using primarily ```ggplot2``` and other parts of the ```tidyverse```.
 
