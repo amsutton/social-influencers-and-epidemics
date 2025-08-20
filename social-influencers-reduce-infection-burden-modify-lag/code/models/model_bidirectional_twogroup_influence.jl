@@ -1,18 +1,9 @@
 
 # Agent-based model of social influence in the context of coupled contagion
 
-#INCLUDES COUNTER FOR ENCOUNTERS, AND OUTGROUP AVERSION
-#ALSO INCLUDES TWO KINDS OF INFLUENCERS (both positive and negative) -- each group can 
-#be influenced separately
-
 #Stanford University -- Winter 2024
 
-######################################################################################
-######################################################################################
-#Authors: Aja Sutton, Postdoctoral Scholar at Stanford Doerr School of Sustainability, 
-#Matthew A. Turner, (fellowship info)
-#James Holland Jones, Professor of Environmental Social Behavior 
-
+#Author: Aja Sutton
 
 #In this version, agents learn to adopt a protective behavior from each other,
 #and can infect each other. They also are able to have their social learning affected
@@ -24,13 +15,6 @@
 # Informed by Simon Frost (@sdwfrost)'s epirecipes: SIR for Julia using Agents.jl, 2020-04-27
 # accessible at: https://github.com/epirecipes/sir-julia/blob/master/markdown/abm/abm.md
 
-
-# based in part on work by:
-#Smaldino, P., & Jones, J. (2021). Coupled dynamics of behaviour and disease 
-#contagion among antagonistic groups. Evolutionary Human Sciences, 3, E28. 
-#doi:10.1017/ehs.2021.22
-######################################################################################
-######################################################################################
 
 #Julia packages
 using Agents
@@ -726,8 +710,7 @@ function transmit!(agent, model)
         #elseif agent.behavior == 0 && (rand() ≤ model.properties[:β] * 1)
         #whereas agent.behavior == 1 && (rand() ≤ (model.properties[:β] * (1-model.properties[:b_protect])))
         #is actually testing the personal risk of a masked person, where at 0.85 efficacy, we assume the inverse
-        #is the personal risk: 1-0.85 = 0.15, so we're testing β * 0.15 (the mask is very effective this way,
-        #as it should be with this parameterization)
+        #is the personal risk: 1-0.85 = 0.15, so we're testing β * 0.15 (the mask is very effective this way)
         if agent.behavior == 1 && (rand() ≤ (model.properties[:β] * (1-model.properties[:b_protect])))
             agent.status = :I #infection occurs
             #count a new infection
