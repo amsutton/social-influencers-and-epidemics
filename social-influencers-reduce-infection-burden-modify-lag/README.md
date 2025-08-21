@@ -2,7 +2,7 @@
 
 <img src="https://github.com/amsutton/social-influencers-and-epidemics/blob/main/social-influencers-reduce-infection-burden-modify-lag/socinf_coverimage.png" alt="infection curves" style="width:50%; height:auto;">
 
-This analysis is primarily built in the ```Julia``` programming language using ```Agents.jl``` to implement and run agent-based models. The visualization of the results is completed in ```R``` programming language using primarily ```ggplot2``` and other parts of the ```tidyverse```.
+This project is done in two parts: the simulations are built in the ```Julia``` programming language using ```Agents.jl``` to implement and run agent-based models. The analysis and visualization of the results is completed in ```R``` programming language using primarily ```ggplot2``` and other parts of the ```tidyverse```.
 
 The code was written by Aja Sutton, with input from co-authors: Adam Z. Reynolds, Matthew A. Turner, and James Holland Jones.
 
