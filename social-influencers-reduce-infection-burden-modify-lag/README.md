@@ -58,8 +58,6 @@ If you are cleaning the raw simulation data, run the code in the script: ```code
 
 This process should generate behaviour and infection curves, as well as analytical results, tables, and figures used in the paper.
 
-Note: we have used a ```substring()``` call a few times in the analytical scripts; it may be necessary to change the indexing in these calls based on the full pathway string your computer uses. We have provided comments on what the extracted strings should look like to ease this process. We aim to replace these with relative pathways soon.
-
 If you have questions or comments, please get in touch with Aja by email, which you can find [here](https://amsutton.github.io/).
 
 
