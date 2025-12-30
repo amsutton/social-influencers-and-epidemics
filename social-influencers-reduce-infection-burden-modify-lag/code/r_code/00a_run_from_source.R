@@ -10,7 +10,7 @@ if (!require("here")) install.packages("here")
 library(here)
 
 # Point to working directory
-here::i_am("code/r_code/000_run_from_source.R")
+here::i_am("code/r_code/00a_run_from_source.R")
 
 # Run analysis from source
 
@@ -21,6 +21,8 @@ source("code/r_code/build_experimental_test_parameter_df.R")
 # NB: prior to running the R code below, the agent-based models must be run in Julia.
 
 # Process and clean raw simulation data produced in Julia
+# This processes simulation data for experiment simulations only; to process
+# baseline data, open this script and at the top set baselines = TRUE
   source("code/r_code/00b_process_simulation_data.R")
 
 # Analyze results and build visualizations of infection and behaviour curves 

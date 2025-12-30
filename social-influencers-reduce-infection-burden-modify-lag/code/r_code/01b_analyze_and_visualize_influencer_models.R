@@ -1,9 +1,9 @@
-#Build diagnostic plots of individual models
+#Build diagnostic plots of individual models: experiment (with influencers)
   
   if (!require("pacman")) install.packages("pacman")
   
-  pacman::p_load(tidyverse,here,qdapRegex,data.table,scales,
-                 fuzzyjoin,wesanderson,ggpubr,ggrepel,patchwork)
+  pacman::p_load(tidyverse,here,qdapRegex,stringr,data.table,scales,ggblend,
+                 wesanderson,ggpubr,ggrepel)
   
   here::i_am("code/r_code/01b_analyze_and_visualize_influencer_models.R")
 
@@ -55,6 +55,7 @@
                                    "health-protective", 
                                    "anti-protective")
 
+    
     g1_influencer_message_phrase =  g1_influencer_message
     g2_influencer_message_phrase =  g2_influencer_message
 
@@ -96,7 +97,6 @@
     w1 = unique(dat$w1)
     w2 = unique(dat$w2)
     aversion = unique(dat$aversion)
-    f = unique(dat$f)
 
     #calculate the peak estimates
     peak = dat %>%
@@ -116,84 +116,10 @@
              peak_n_behavior_upper = quantile(max_behavior,probs=0.975)) 
 
     
-    #identify the difference -- that is, the difference in the number infections at peak
-    #between health-protective and anti-protective groups. If the number is positive, it means that
-    #the health-protective group had more infections at peak than the anti-protective one 
-    #(this is not what we expect, based on concordance! should be protective!).
-    #then, we calculate the proportion of the simulations in which this is true
-    #to get a sense of how prevalent (really, rare) this is.
-
-   diff_and_pct = peak %>%
-      select(-peak_n_infections_median,
-             -peak_n_infections_lower,
-             -peak_n_infections_upper) %>%
-      pivot_wider(., names_from = "group", values_from = "max_status")
-   
-   cols_health_protective = str_detect(names(diff_and_pct), "health-protective")
-   cols_anti_protective =  str_detect(names(diff_and_pct), "anti-protective")
-   
-   difference = diff_and_pct[,cols_health_protective] - diff_and_pct[,cols_anti_protective]
-   colnames(difference) = "difference"
-   diff_and_pct = cbind(diff_and_pct,difference)
-   
-   # #proportion of the runs that are zero or greater, 
-   # #based on expectation that health-protective should 
-   # #usually be fewer infections than anti-protective
-   diff_and_pct =  diff_and_pct %>%
-     ungroup() %>%
-      filter(difference >= 0) %>%
-      mutate(pct_sims_health_protective_same_or_fewer_infections = nrow(.)/1000*100,
-             pct_sims_health_protective_same_mean_diff = mean(difference),
-             pct_sims_health_protective_same_median_diff = median(difference),
-             pct_sims_health_protective_same_lower_diff = quantile(difference,probs=0.025),
-             pct_sims_health_protective_same_upper_diff = quantile(difference,probs=0.975)
-             ) %>%
-    select(pct_sims_health_protective_same_or_fewer_infections:pct_sims_health_protective_same_upper_diff) %>%
-     distinct()
-   
-   peak = peak %>%
-     ungroup() %>%
-     select(group,peak_n_infections_median:peak_n_infections_upper) %>%
-     distinct()
-   
-   peak = cbind(peak,diff_and_pct)
-   rm(diff_and_pct,difference)
-   
-   #do the same for behaviours (could functionalize this, but for speed...)
-   
-   diff_and_pct = peak_behavior %>%
-     select(-peak_n_behavior_median,-peak_n_behavior_lower,-peak_n_behavior_upper) %>%
-     pivot_wider(., names_from = "group", values_from = "max_behavior")
-   
-   cols_health_protective = str_detect(names(diff_and_pct), "health-protective")
-   cols_anti_protective =  str_detect(names(diff_and_pct), "anti-protective")
-   
-   difference = diff_and_pct[,cols_health_protective] - diff_and_pct[,cols_anti_protective]
-   colnames(difference) = "difference"
-   diff_and_pct = cbind(diff_and_pct,difference)
-   
-   # #proportion of the runs that are zero or greater, 
-   # #based on expectation that health-protective should 
-   # #usually be fewer behavior than anti-protective
-   diff_and_pct =  diff_and_pct %>%
-     ungroup() %>%
-     filter(difference >= 0) %>%
-     mutate(pct_sims_health_protective_same_or_fewer_behavior = nrow(.)/1000*100,
-            pct_sims_health_protective_same_mean_diff = mean(difference),
-            pct_sims_health_protective_same_median_diff = median(difference),
-            pct_sims_health_protective_same_lower_diff = quantile(difference,probs=0.025),
-            pct_sims_health_protective_same_upper_diff = quantile(difference,probs=0.975)
-     ) %>%
-     select(pct_sims_health_protective_same_or_fewer_behavior:pct_sims_health_protective_same_upper_diff) %>%
-     distinct()
-   
-   peak_behavior = peak_behavior %>%
-     ungroup() %>%
-     select(group,peak_n_behavior_median:peak_n_behavior_upper) %>%
-     distinct()
-   
-   peak_behavior = cbind(peak_behavior,diff_and_pct)
-   rm(diff_and_pct,difference)
+    #save these for visualization
+    
+  fwrite(peak,here(paste0("output/abm_results/summary_results/experiment/",string_two,"_",string_one,"_total_peak_infection_stats.csv")))
+  fwrite(peak_behavior,here(paste0("output/abm_results/summary_results/experiment/",string_two,"_",string_one,"_total_peak_behavior_stats.csv")))
 
     #then compare with the no-influence runs, and based on their proportions 
     #we can discuss the effect of the influence
@@ -208,10 +134,11 @@
         max_status = as.double(max(n_status)),
         mean_status = as.double(mean(n_status)),
         q0.025_status  = as.double(quantile(n_status, probs = 0.025)),
-        q0.1_status  = as.double(quantile(n_status, probs = 0.1)),
+   #     q0.1_status  = as.double(quantile(n_status, probs = 0.1)),
         q0.5_status  = as.double(quantile(n_status, probs = 0.5)), #same as med_status
-        q0.975_status  = as.double(quantile(n_status, probs = 0.975)),
-        q0.9_status  = as.double(quantile(n_status, probs = 0.9))) %>%
+        q0.975_status  = as.double(quantile(n_status, probs = 0.975))#,
+       # q0.9_status  = as.double(quantile(n_status, probs = 0.9))
+   ) %>%
       filter(status == "infected") %>%
       mutate(
         min_behavior = as.double(min(n_behavior)),
@@ -219,12 +146,13 @@
         max_behavior = as.double(max(n_behavior)),
         mean_behavior = as.double(mean(n_behavior)),
         q0.025_behavior  = as.double(quantile(n_behavior, probs = 0.025)),
-        q0.1_behavior  = as.double(quantile(n_behavior, probs = 0.1)),
+      #  q0.1_behavior  = as.double(quantile(n_behavior, probs = 0.1)),
         #q0.5_behavior  = as.double(quantile(n_behavior, probs = 0.5)), #same as med_behavior
-        q0.975_behavior  = as.double(quantile(n_behavior, probs = 0.975)),
-        q0.9_behavior  = as.double(quantile(n_behavior, probs = 0.9))) %>%
+        q0.975_behavior  = as.double(quantile(n_behavior, probs = 0.975))#,
+       # q0.9_behavior  = as.double(quantile(n_behavior, probs = 0.9))
+      ) %>%
       ungroup() %>%
-      select(step,group,min_status:q0.9_behavior) %>%
+      select(step,group,min_status:q0.975_behavior) %>%
       distinct()
 
   #labels for homophily and aversion in plots
@@ -244,8 +172,7 @@
                     type="discrete")
     colours = c(colours[3],colours[1])
 
-  inf =
-    dat %>%
+  dat %>%
     na.omit() %>%
     filter(status == "infected") %>%
     select(id,rep_idx,step,group,n_status,f) %>% #f used as a convenience for labelling
@@ -255,33 +182,34 @@
                x = step)) +
     geom_line(aes(group = interaction(id,rep_idx,group),
                   y = (n_status/500)*100),
-              alpha = 0.006) +
+              alpha = 0.004) +
     geom_line(data= dat_distribution,
               aes(y = (med_status/500)*100,
                   group = as.factor(group)),
-              linewidth = 1.25) +
+              linewidth = 2.25) |> blend("multiply") +
     scale_color_manual(values= colours,
                        aesthetics = c("color")) +
-    scale_y_continuous(limits = c(0,40),
-                       breaks=seq(0,40,by=10)) +
-    scale_x_continuous(limits = c(0,250)) +
+      scale_y_continuous(limits = c(0,40),
+                         breaks=seq(0,40,by=20)) +
+      scale_x_continuous(limits = c(0,225),
+                         breaks=seq(0,225,by=100)) +
     theme_pubclean() +
       theme(legend.position = "none",
             strip.background = element_rect(fill="white",
                                             colour = "black",
                                             linewidth = 0.5),
-            text =  element_text(colour = "black",
-                                 size = 17),
-            axis.text = element_text(colour = "black",
-                                     size = 17),
-            axis.ticks = element_line(colour="black"),
+            # text =  element_text(colour = "black",
+            #                      size = 17),
+            axis.text = element_blank(),
+            # axis.ticks = element_line(colour="black"),
+            axis.ticks = element_line(colour="black",linewidth = 2),
+            axis.ticks.length = unit(0.5,"cm"),
             axis.title =  element_blank())
-  
-  ggsave(plot = inf,here(paste0("output/abm_results/viz/individual_model_viz/paper_results/infection_curves/",string_two,"_",string_one,"_",g1_influencer_message,"_",g2_influencer_message,"_results.png")), width = 4, height = 2.5, units = "in", bg="white",dpi = 350)
+
+  ggsave(here(paste0("output/abm_results/viz/individual_model_viz/paper_results/infection_curves/",string_two,"_",string_one,"_",g1_influencer_message,"_",g2_influencer_message,"_results.png")), width = 3, height = 2.5, units = "in", bg="white",dpi = 350)
 
   #Visualize Behavioral Learning Simulations with Median
-  bh =
-    dat %>%
+  dat %>%
     na.omit() %>%
     select(id,rep_idx,step,group,n_behavior,f) %>%
     group_by(id,rep_idx,step,group) %>%
@@ -290,152 +218,72 @@
     ggplot(aes(x=step,color=group)) +
     geom_line(aes(group = interaction(id,rep_idx,group),
                   y = (n_behavior/500)*100),
-              alpha = 0.006) +
+              alpha = 0.004) +
     geom_line(data= dat_distribution,
               aes(y = (med_behavior/500)*100,
                   group = group),
-              linewidth = 1.25) +
+              linewidth = 2.25)|> blend("multiply") +
     scale_color_manual(values= colours,
                        aesthetics = c("color")) +
-    scale_y_continuous(limits = c(0,60),
-                       breaks = seq(0,60,by=20)) +
-    scale_x_continuous(limits = c(0,250)) +
+      scale_y_continuous(limits = c(0,60),
+                         breaks=seq(0,60,by=20)) +
+      scale_x_continuous(limits = c(0,225),
+                         breaks=seq(0,225,by=100)) +
     theme_pubclean() +
     theme(legend.position = "none",
           strip.background = element_rect(fill="white",
                                           colour = "black",
                                           linewidth = 0.5),
-          text =  element_text(colour = "black",
-                               size = 17),
-          axis.text = element_text(colour = "black",
-                                   size = 17),
-          axis.ticks = element_line(colour="black"),
+          axis.ticks = element_line(colour="black",linewidth = 2),
+          axis.ticks.length = unit(0.5,"cm"),
+          text =  element_blank(),
+          axis.text = element_blank(),
+          # axis.ticks = element_line(colour="black"),
           axis.title = element_blank())
-  
-  ggsave(plot=bh,here(paste0("output/abm_results/viz/individual_model_viz/paper_results/behaviour_curves/",string_two,"_",string_one,"_",g1_influencer_message,"_",g2_influencer_message,"_results.png")), width = 4, height = 2.5, units = "in", bg="white",dpi = 350)
 
+  ggsave(here(paste0("output/abm_results/viz/individual_model_viz/paper_results/behaviour_curves/",string_two,"_",string_one,"_",g1_influencer_message,"_",g2_influencer_message,"_results.png")), width = 3, height = 2.5, units = "in", bg="white",dpi = 350)
 
-    #get end of epidemic peak step by group:
-    endstep =
-      dat_distribution %>%
-      group_by(group) %>%
-      filter(step > 150,
-             med_status < 4) %>% #this is where it gets stochastically variable, but it's essentially over
-      filter(step == min(step)) %>%
-      select(step,group)
-
-    group1_endstep = c(endstep$step[1])
-    group2_endstep = c(endstep$step[2])
+  #get the total infection burden stats: Figure 4b
 
   #take the infection cdf data by step, and calculate the distribution of that point
-    group1_endpoint_cdf =
-      cdf_newinfections_bygroup %>%
-        group_by(id,rep_idx) %>%
-        filter(str_detect(group, "early-infected"),
-               step ==(group1_endstep)) %>%
-        ungroup() %>%
-        select(group,cdf_newinfections) %>%
-        reframe(group,
-                q0.025  = as.double(quantile(cdf_newinfections, probs = 0.025)),
-                q0.1 = as.double(quantile(cdf_newinfections, probs = 0.1)),
-                q0.5 = as.double(quantile(cdf_newinfections, probs = 0.5)), #same as med_cdf_distribution
-                q0.975  = as.double(quantile(cdf_newinfections, probs = 0.975)),
-                q0.9 = as.double(quantile(cdf_newinfections, probs = 0.9))) %>%
-        distinct()
+  group1_endpoint_cdf = cdf_newinfections_bygroup %>%
+    group_by(id,rep_idx) %>%
+    filter(str_detect(group, "early-infected"),
+           n_new_infections>=4) %>%
+    filter(step == max(step))
 
-     group2_endpoint_cdf =
-      cdf_newinfections_bygroup %>%
-      group_by(id,rep_idx) %>%
-      filter(str_detect(group, "late-infected"),
-             step ==(group2_endstep)) %>%
-      ungroup() %>%
-      select(group, cdf_newinfections) %>%
-      reframe(group,
-              q0.025  = as.double(quantile(cdf_newinfections, probs = 0.025)),
-              q0.1  = as.double(quantile(cdf_newinfections, probs = 0.1)),
-              q0.5 = as.double(quantile(cdf_newinfections, probs = 0.5)), #same as med_cdf_distribution
-              q0.975  = as.double(quantile(cdf_newinfections, probs = 0.975)),
-              q0.9  = as.double(quantile(cdf_newinfections, probs = 0.9))) %>%
-      distinct()
+  group2_endpoint_cdf = cdf_newinfections_bygroup %>%
+    group_by(id,rep_idx) %>%
+    filter(str_detect(group, "late-infected"),
+           n_new_infections>=4) %>%
+    filter(step == max(step))
 
-    endpoint_cdf = rbind(group1_endpoint_cdf,group2_endpoint_cdf)
+  endpoint_cdf = rbind(group1_endpoint_cdf,group2_endpoint_cdf)
+  rm(group1_endpoint_cdf,group2_endpoint_cdf)
 
-    rm(group1_endpoint_cdf,group2_endpoint_cdf)
+  #calculate the percent infected
+  endpoint_cdf$pct_group_infected_end_of_curve = endpoint_cdf$cdf_newinfections/500*100
 
-    endpoint_cdf =
-      endpoint_cdf %>%
-      group_by(group) %>%
-      pivot_longer(cols = c("q0.025":"q0.9"),
-                   names_to = "measure",
-                   values_to = "count")
+  # Do the same for behavior
 
-    #calculate the percent infected
-    endpoint_cdf$pct_infected_end_of_curve = endpoint_cdf$count/500*100
+  #we will use the same end step as with infections for coherence
+  last_step = endpoint_cdf %>%
+    select(id,rep_idx,group,step) %>%
+    rename(laststep = step)
 
-    #calculate difference between groups by measure
-    endpoint_cdf = 
-      endpoint_cdf %>%
-      group_by(measure) %>%
-      mutate(pct_difference = pct_infected_end_of_curve[str_detect(group,"early-infected")] - pct_infected_end_of_curve[str_detect(group,"late-infected")],
-             step_end_of_curve = ifelse(str_detect(group,"early-infected"), paste0(group1_endstep),paste0(group2_endstep)))
+  endpoint_cdf_behavior =
+    left_join(cdf_newbehaviors_bygroup,last_step, by = c("id","rep_idx","group")) %>%
+    group_by(id,rep_idx) %>%
+    filter(step == laststep)
 
-    
-    #take the infection cdf data by step, and calculate the distribution of that point
-    group1_endpoint_cdf =
-      cdf_newbehaviors_bygroup %>%
-      group_by(id,rep_idx) %>%
-      filter(str_detect(group, "early-infected"),
-             step ==(group1_endstep)) %>%
-      ungroup() %>%
-      select(group,cdf_newbehaviors) %>%
-      reframe(group,
-              q0.025  = as.double(quantile(cdf_newbehaviors, probs = 0.025)),
-              q0.1 = as.double(quantile(cdf_newbehaviors, probs = 0.1)),
-              q0.5 = as.double(quantile(cdf_newbehaviors, probs = 0.5)), #same as med_cdf_distribution
-              q0.975  = as.double(quantile(cdf_newbehaviors, probs = 0.975)),
-              q0.9 = as.double(quantile(cdf_newbehaviors, probs = 0.9))) %>%
-      distinct()
-    
-    group2_endpoint_cdf =
-      cdf_newbehaviors_bygroup %>%
-      group_by(id,rep_idx) %>%
-      filter(str_detect(group, "late-infected"),
-             step ==(group2_endstep)) %>%
-      ungroup() %>%
-      select(group,cdf_newbehaviors) %>%
-      reframe(group,
-              q0.025  = as.double(quantile(cdf_newbehaviors, probs = 0.025)),
-              q0.1  = as.double(quantile(cdf_newbehaviors, probs = 0.1)),
-              q0.5 = as.double(quantile(cdf_newbehaviors, probs = 0.5)), #same as med_cdf_distribution
-              q0.975  = as.double(quantile(cdf_newbehaviors, probs = 0.975)),
-              q0.9  = as.double(quantile(cdf_newbehaviors, probs = 0.9))) %>%
-      distinct()
-    
-    endpoint_cdf_behavior = rbind(group1_endpoint_cdf,group2_endpoint_cdf)
-    
-    rm(group1_endpoint_cdf,group2_endpoint_cdf)
-    
-    endpoint_cdf_behavior =
-      endpoint_cdf_behavior %>%
-      group_by(group) %>%
-      pivot_longer(cols = c("q0.025":"q0.9"),
-                   names_to = "measure",
-                   values_to = "count")
-    
-    #calculate the percent infected
-    endpoint_cdf_behavior$pct_behavior_end_of_curve = endpoint_cdf_behavior$count/500*100
-    
-    #calculate difference between groups by measure
-    endpoint_cdf_behavior = 
-      endpoint_cdf_behavior %>%
-      group_by(measure) %>%
-      mutate(pct_difference = pct_behavior_end_of_curve[str_detect(group,"early-infected")] - pct_behavior_end_of_curve[str_detect(group,"late-infected")],
-             step_end_of_curve = ifelse(str_detect(group,"early-infected"), paste0(group1_endstep),paste0(group2_endstep)))
-    
-    endpoint_cdf = left_join(endpoint_cdf,endpoint_cdf_behavior, by =c("group","measure"))
-    
-    fwrite(endpoint_cdf,here(paste0("output/abm_results/summary_results/experiment/",string_two,"_",string_one,"_total_infection_differences_stats.csv")))
-    
+  #calculate the percent with the behaviour
+  endpoint_cdf_behavior$pct_group_behavior_end_of_curve = endpoint_cdf_behavior$cdf_newbehaviors/500*100
+
+  endpoint_cdf =
+    left_join(endpoint_cdf,endpoint_cdf_behavior, by =c("id","rep_idx","group","step"))
+
+  fwrite(endpoint_cdf,here(paste0("output/abm_results/summary_results/experiment/",string_two,"_",string_one,"_total_infection_differences_stats.csv")))
+
     rm(endpoint_cdf,endpoint_cdf_behavior)
 
 
@@ -475,11 +323,11 @@
     missing_values = left_join(missing_values,step_at_the_peak,by=c("id","rep_idx"))
 
     #dummy a row for the missing ones
-    temp = 
+    temp =
       missing_values
 
     #create the zero intuitively for whichever group is appropriate
-    temp = 
+    temp =
       temp %>%
       mutate(n_status = 0,
              step_at_the_peak = NA,
@@ -507,29 +355,29 @@
 
     step_at_the_peak = rbind(step_at_the_peak,missing_values)
 
-    step_at_the_peak = 
+    step_at_the_peak =
       step_at_the_peak %>%
       select(-cross_tab)
 
   }
 
   #join step_at_the_peak to cdf_newinfections_bygroup
-  step_at_the_peak = 
+  step_at_the_peak =
     step_at_the_peak %>%
     rename(group_concordance = group) %>%
     mutate(group = str_extract(group_concordance,"early-infected group|late-infected group"))
 
   cdf_newinfections_bygroup = left_join(cdf_newinfections_bygroup,step_at_the_peak,by=c('id','rep_idx','group'),relationship = "many-to-many")
-  
-  cdf_newinfections_bygroup = 
+
+  cdf_newinfections_bygroup =
     cdf_newinfections_bygroup %>%
     group_by(id,rep_idx,group) %>%
     filter(step <= step_at_the_peak) %>%
     ungroup()
-  
+
   #join behavioural cdf data too
   cdf_newbehaviors_bygroup = left_join(cdf_newbehaviors_bygroup,step_at_the_peak,by=c('id','rep_idx','group'),relationship = "many-to-many")
-  cdf_newbehaviors_bygroup = 
+  cdf_newbehaviors_bygroup =
     cdf_newbehaviors_bygroup %>%
     group_by(id,rep_idx,group) %>%
     filter(step <= step_at_the_peak) %>%
@@ -550,10 +398,8 @@
   #NB: the behaviour growth rates aren't the same as the infection growth rates, because
   #we don't have the incident number of new behavioural adoption at each time step in
   #these data (a later consideration, after the model was built and run)
-  
-  #We do not include the behavioural growth rate calculations in the paper because
-  #they are not equivalent to the log-mean growth rates for infections (prevalence counts, not incidence!)
-  growth_rate = 
+
+  growth_rate =
     cdfs_by_group %>%
     group_by(id,rep_idx,group) %>%
     #mutate(test = lag(cdf_newinfections)) %>%
@@ -563,54 +409,22 @@
     group_by(group) %>%
     mutate(infection_mean_growth_rate = mean(infection_growth_rate,na.rm=TRUE),
            infection_median_growth_rate = median(infection_growth_rate,na.rm=TRUE),
+           infection_lower_ci50_growth_rate = quantile(infection_growth_rate,probs=0.25,na.rm=TRUE),
+           infection_upper_ci50_growth_rate = quantile(infection_growth_rate,probs=0.75,na.rm=TRUE),
            infection_lower_ci95_growth_rate = quantile(infection_growth_rate,probs=0.025,na.rm=TRUE),
            infection_upper_ci95_growth_rate = quantile(infection_growth_rate,probs=0.975,na.rm=TRUE),
            behavior_mean_growth_rate = mean(behavior_growth_rate,na.rm=TRUE),
            behavior_median_growth_rate = median(behavior_growth_rate,na.rm=TRUE),
            behavior_lower_ci95_growth_rate = quantile(behavior_growth_rate,probs=0.025,na.rm=TRUE),
-           behavior_upper_ci95_growth_rate = quantile(behavior_growth_rate,probs=0.975,na.rm=TRUE)) %>%
-    select(group,infection_mean_growth_rate:behavior_upper_ci95_growth_rate) %>%
+           behavior_upper_ci95_growth_rate = quantile(behavior_growth_rate,probs=0.975,na.rm=TRUE),
+           behavior_lower_ci50_growth_rate = quantile(behavior_growth_rate,probs=0.25,na.rm=TRUE),
+           behavior_upper_ci50_growth_rate = quantile(behavior_growth_rate,probs=0.75,na.rm=TRUE)) %>%
+    select(group,infection_mean_growth_rate:behavior_upper_ci50_growth_rate) %>%
     distinct() %>%
     ungroup()
 
+
     write.csv(growth_rate, file = here(paste0("output/abm_results/summary_results/experiment/",string_two,"_",string_one,"growth_rate.csv")))
-
-    
-    cdf_newinfections_bygroup =
-      cdf_newinfections_bygroup %>%
-      group_by(group) %>%
-      mutate(mean_infection_rate_prepeak = as.double(mean(n_new_infections)),
-             median_infection_rate_prepeak = as.double(quantile(n_new_infections,probs=0.5)),
-             lower_infection_rate_prepeak = as.double(quantile(n_new_infections,probs=0.025)),
-             upper_infection_rate_prepeak = as.double(quantile(n_new_infections,probs=0.975))
-             ) %>%
-      ungroup() %>%
-      select(group_concordance,mean_infection_rate_prepeak:upper_infection_rate_prepeak) %>%
-      distinct() %>%
-      rename(group = group_concordance)
-
-   peak = left_join(peak,cdf_newinfections_bygroup,by=c("group"))
-   
-   cdf_newbehaviors_bygroup =
-     cdf_newbehaviors_bygroup %>%
-     group_by(group) %>%
-     mutate(mean_behavior_rate_prepeak = as.double(mean(n_new_behaviors)),
-            median_behavior_rate_prepeak = as.double(quantile(n_new_behaviors,probs=0.5)),
-            lower_behavior_rate_prepeak = as.double(quantile(n_new_behaviors,probs=0.025)),
-            upper_behavior_rate_prepeak = as.double(quantile(n_new_behaviors,probs=0.975))
-     ) %>%
-     ungroup() %>%
-     select(group_concordance,mean_behavior_rate_prepeak:upper_behavior_rate_prepeak) %>%
-     distinct() %>%
-     rename(group = group_concordance)
-   
-   peak_behavior = left_join(peak_behavior,cdf_newbehaviors_bygroup,by=c("group"))
-   
-
-   peak =left_join(peak,peak_behavior, by = c("group"))
-   
-   fwrite(peak,here(paste0("output/abm_results/summary_results/experiment/",string_two,"_",string_one,"_basic_behavior_healthstat_statistics.csv")))
-
 
     }
 
@@ -656,6 +470,4 @@
       gc()
     }
 
-  
-{
   

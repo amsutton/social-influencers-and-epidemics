@@ -64,6 +64,9 @@ function social_influence_experiment(nagents = 1000; #number of :RegularAgents
     #helper R0
     R0 = β/γ
 
+    #if interested in setting your own R0, you can derive it like this:
+    #β = R0*γ
+
     N = nagents+ninfluencers #number of agents
     I0 = 10 #number of initial infections
 

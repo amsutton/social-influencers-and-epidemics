@@ -79,7 +79,7 @@ end
 
 
 
-function run_trials(nreplicates = 10; 
+function run_trials(nreplicates = 100; 
                     outputfilename = "trials_output.jld2", 
                     experiment_kwargs...)
 

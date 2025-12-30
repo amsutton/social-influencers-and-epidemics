@@ -7,8 +7,8 @@ here::i_am("code/r_code/00b_process_simulation_data.R")
 
 #data
 #YOU MUST INDICATE WHETHER YOU WANT TO PROCESS THE BASELINES OR THE EXPERIMENT RESULTS
-baselines = FALSE
-#f5_path = "data/raw_abm_results/f5_results"
+baselines = FALSE #set to TRUE if you want to process baseline data
+
 
 if (baselines == TRUE){
   path = "data/raw_abm_results/baselines"
@@ -19,8 +19,8 @@ if (baselines == TRUE){
 
 temp <- list.files(
   path = here(paste0(path)),
-  #pattern = "status.*\\.csv$", # has "status", followed by 0 or more characters, then ".csv", and then nothing else ($)
-  full.names = TRUE) # include the directory in the result)
+  pattern = "*\\.csv$", 
+  full.names = TRUE) 
 
 temp = as.data.frame(temp)
 colnames(temp) = "file"
@@ -47,18 +47,13 @@ if (baselines == FALSE){
     mutate(model_id = cur_group_id())
 }
 
-#there should only be 10 files per model, so we find out which ones have too many
-#This is weird. Maybe rerun these?
-# toomany = temp2 %>% group_by(model_id,string_one,string_two) %>% reframe(n = n()) %>% filter(n >10)
-# toomany = toomany %>% select(-n) %>% distinct
-# toomany
 
 temp = temp %>%
   distinct
 
 
 if(baselines == TRUE){
-  saveRDS(temp, file=here("data/baseline_id_list.RDS"))
+  saveRDS(temp, file=here("data/baseline_id_list_temp.RDS"))
   } else {
   saveRDS(temp, file=here("data/model_id_list.RDS"))
   }
@@ -67,7 +62,6 @@ if(baselines == TRUE){
 #and then loading the data for those specific files (i.e., by each model)
 
 
-#functionalization was a bust so:
 
 for (i in 1:nrow(temp)){
  
@@ -115,13 +109,10 @@ for (i in 1:nrow(temp)){
     
     dat = map_dfr(model_filenames, fread, .id = 'id_temp')
 
-    #R being picky: this has to be coded like this    
-    #dat = dat %>%
-     # rename(infalterid_influencedagents = id_temp)
     dat = dat %>%
-      rename(id_temp = id)
+      rename(id = id_temp)
 
-    #I just don't think I need any recovered data for this
+    #No recovered data necessary for this analysis, so we filter out
     dat = dat %>%
       filter(status !="R")
 
