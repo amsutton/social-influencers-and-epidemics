@@ -74,3 +74,8 @@ docs/site/
 # environment.
 .Rproj.user
 .DS_Store
+
+#exclude local output files, like plots, tables, except specific results
+.xlsx
+.pptx
+.key
